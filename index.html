@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>baileys — docs</title>
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c2128; --border:#30363d;
+  --fg:#e6edf3; --muted:#8b949e; --accent:#2f81f7; --green:#3fb950; --code:#0b0f14;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+header{position:sticky;top:0;z-index:10;background:rgba(13,17,23,.92);
+  backdrop-filter:blur(6px);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;padding:10px 18px;flex-wrap:wrap}
+header b{font-size:17px}
+header .ver{color:var(--muted);font-size:12px;border:1px solid var(--border);
+  padding:1px 7px;border-radius:20px}
+header input{margin-left:auto;background:var(--panel);border:1px solid var(--border);
+  color:var(--fg);padding:7px 11px;border-radius:6px;width:230px;font-size:14px}
+header input:focus{outline:none;border-color:var(--accent)}
+nav{position:sticky;top:53px;align-self:flex-start;height:calc(100vh - 53px);overflow:auto;
+  width:250px;flex:0 0 250px;border-right:1px solid var(--border);padding:14px 0}
+nav a{display:block;padding:5px 18px;color:var(--muted);font-size:13.5px}
+nav a:hover{color:var(--fg);background:var(--panel);text-decoration:none}
+nav a.on{color:var(--fg);border-left:2px solid var(--accent);background:var(--panel)}
+body{display:flex;flex-direction:column}
+.wrap{display:flex;align-items:flex-start}
+main{flex:1;min-width:0;padding:26px 34px 90px;max-width:900px}
+h1{font-size:30px;margin:0 0 4px}
+h2{font-size:22px;margin:38px 0 10px;padding-top:10px;border-top:1px solid var(--border)}
+h3{font-size:17px;margin:24px 0 8px}
+p,li{color:#c9d1d9}
+code{background:var(--code);padding:1.5px 5px;border-radius:4px;font-size:13px;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#ffa657}
+pre{background:var(--code);border:1px solid var(--border);border-radius:8px;
+  padding:13px 15px;overflow:auto;font-size:13px;line-height:1.55}
+pre code{background:none;padding:0;color:#c9d1d9}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+th,td{border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.note{border-left:3px solid var(--accent);background:var(--panel);padding:10px 14px;
+  border-radius:0 6px 6px 0;margin:14px 0}
+.warn{border-left-color:#d29922}
+.sub{color:var(--muted);margin:0 0 18px}
+.pill{display:inline-block;background:var(--panel2);border:1px solid var(--border);
+  border-radius:20px;padding:0 9px;font-size:12px;color:var(--muted);margin-right:6px}
+footer{border-top:1px solid var(--border);padding:18px 34px;color:var(--muted);font-size:12.5px}
+@media(max-width:820px){nav{display:none}main{padding:20px 16px 70px}}
+</style>
+</head>
+<body>
+<header>
+  <b>baileys</b><span class="ver">v7.0.0-rc14 · port Python</span>
+  <input id="q" placeholder="cerca nelle docs…">
+</header>
+
+<div class="wrap">
+<nav id="nav">
+  <a href="#start">Avvio</a>
+  <a href="#client">Client</a>
+  <a href="#comandi">Comandi</a>
+  <a href="#messaggi">Messaggi</a>
+  <a href="#contenuti">Contenuti inviabili</a>
+  <a href="#eventi">Eventi</a>
+  <a href="#filtri">Filtri e middleware</a>
+  <a href="#gruppi">Gruppi e contatti</a>
+  <a href="#coda">Coda di invio</a>
+  <a href="#storage">Storage</a>
+  <a href="#plugin">Plugin e account multipli</a>
+  <a href="#tipi">Tipi base</a>
+  <a href="#socket">Socket low-level</a>
+  <a href="#faq">FAQ</a>
+</nav>
+
+<main>
+<h1>baileys</h1>
+<p class="sub">Bot WhatsApp in Python con i decoratori. Port completo di Baileys (TypeScript) con un'API di alto livello sopra.</p>
+<div class="note warn"><b>Non ufficiale.</b> Nessun legame con WhatsApp o Meta. Automatizzare WhatsApp può portare al ban del numero: usalo a tuo rischio e non fare spam.</div>
+<p><span class="pill">Python 3.10+</span><span class="pill">asyncio</span><span class="pill">nessun browser</span><span class="pill">ffmpeg solo per sticker video</span></p>
+
+<h2 id="start">Avvio</h2>
+<pre><code>pip install git+https://github.com/ChillatoOfficial/baileys.git
+
+# con storage Redis
+pip install "baileys[redis] @ git+https://github.com/ChillatoOfficial/baileys.git"</code></pre>
+<pre><code>from baileys import Client, Message
+
+client = Client('auth')                      # sessione salvata in ./auth
+
+@client.command('ping')
+async def ping(m: Message):
+    await m.reply('pong 🏓')
+
+client.run()</code></pre>
+<p>Scansiona il QR da <b>WhatsApp → Dispositivi collegati → Collega un dispositivo</b>. Al riavvio si riconnette da solo. Per il codice di pairing: <code>Client('auth', pairing_phone='391234567890')</code>.</p>
+
+<h2 id="client">Client</h2>
+<pre><code>Client(auth='baileys_auth_info', *, prefix='/', print_qr=True, pairing_phone=None,
+       auto_reconnect=True, fetch_version=False, ignore_from_me=True, only_notify=True,
+       log_level='warn', owners=(), help_command=True, denied_messages=None,
+       rate_limit=None, auto_read=False, group_cache_ttl=300, name=None, **socket_config)</code></pre>
+<table>
+<tr><th>parametro</th><th>significato</th></tr>
+<tr><td><code>auth</code></td><td>cartella multi-file · <code>'bot.db'</code>/<code>.sqlite</code> · <code>(state, save_creds)</code> · factory <code>async</code></td></tr>
+<tr><td><code>prefix</code></td><td>str o tupla di prefissi dei comandi</td></tr>
+<tr><td><code>print_qr</code></td><td>QR nel terminale (richiede <code>qrcode</code>); <code>@client.on_qr</code> lo sostituisce</td></tr>
+<tr><td><code>pairing_phone</code></td><td>solo cifre: accesso con codice invece del QR</td></tr>
+<tr><td><code>auto_reconnect</code></td><td>riconnette a ogni chiusura tranne <code>loggedOut</code></td></tr>
+<tr><td><code>ignore_from_me</code></td><td>ignora i messaggi inviati dal tuo stesso account</td></tr>
+<tr><td><code>only_notify</code></td><td>gestisce solo <code>messages.upsert</code> di tipo <code>notify</code></td></tr>
+<tr><td><code>owners</code></td><td>numeri (cifre) autorizzati ai comandi <code>owner_only</code></td></tr>
+<tr><td><code>help_command</code></td><td>registra il <code>/help</code> integrato</td></tr>
+<tr><td><code>denied_messages</code></td><td>override dei testi di rifiuto, <code>False</code> = silenzioso</td></tr>
+<tr><td><code>rate_limit</code></td><td><code>None</code> default · <code>False</code> disattiva · <code>dict</code>/<code>SendQueue</code></td></tr>
+<tr><td><code>log_level</code></td><td><code>trace debug info warn error silent</code></td></tr>
+<tr><td><code>**socket_config</code></td><td>qualsiasi opzione del socket</td></tr>
+</table>
+<h3>Attributi</h3>
+<p><code>client.sock</code> (socket low-level dopo <code>start()</code>) · <code>client.me</code> (<code>id</code>, <code>lid</code>, <code>name</code>) · <code>client.contacts</code> · <code>client.chats</code> · <code>client.queue</code> · <code>client.owners</code>, <code>client.prefixes</code>, <code>client.logger</code>, <code>client.name</code>, <code>client.plugins</code>.</p>
+
+<h2 id="comandi">Comandi</h2>
+<pre><code>client = Client('auth', prefix=('/', '!'), owners=['391234567890'])
+
+@client.command('ping', 'p', help='pong', cooldown=3)
+async def ping(m):                 # handler(m) oppure handler(m, args)
+    await m.reply('pong')</code></pre>
+<p>Nel handler hai <code>m.command</code> (nome canonico), <code>m.args</code> (split stile shell, virgolette rispettate) e <code>m.arg_text</code>.</p>
+<table>
+<tr><th>opzione</th><th>significato</th></tr>
+<tr><td><code>help='...'</code></td><td>mostrato da <code>/help</code> integrato</td></tr>
+<tr><td><code>hidden=True</code></td><td>mai elencato</td></tr>
+<tr><td><code>group_only</code> / <code>private_only</code></td><td>dove funziona</td></tr>
+<tr><td><code>admin_only</code></td><td>mittente admin del gruppo (owner e tuo account passano)</td></tr>
+<tr><td><code>bot_admin</code></td><td>il bot deve essere admin</td></tr>
+<tr><td><code>owner_only</code></td><td>tuo account o uno degli <code>owners</code></td></tr>
+<tr><td><code>cooldown=secondi</code></td><td>per utente e comando</td></tr>
+<tr><td><code>filter=filters.xxx</code></td><td>condizione extra; se fallisce il comando è ignorato</td></tr>
+<tr><td><code>from_me=True</code></td><td>reagisce anche ai messaggi del bot</td></tr>
+</table>
+<pre><code>@client.on_denied
+async def denied(m, reason, command):     # admin_only | bot_admin | group_only | private_only | owner_only | cooldown
+    await m.react('⛔')</code></pre>
+
+<h2 id="messaggi">Messaggi</h2>
+<pre><code>await m.reply('testo')                               # cita il messaggio
+await m.send('testo')                                # senza citazione
+await m.reply_image('foto.jpg', 'caption')           # path, URL, bytes o {'stream': ...}
+await m.reply_video('clip.mp4', gif=True)
+await m.reply_audio('voce.ogg', voice_note=True)
+await m.reply_document(open('a.pdf','rb').read(), 'a.pdf', 'application/pdf')
+await m.reply_sticker('sticker.webp')
+await m.reply_location(45.46, 9.19, 'Milano')
+await m.reply_contact('Bob', '+39 333 1234567')
+await m.reply_poll('Pranzo?', ['pizza', 'sushi'])
+await m.mention_all('riunione ora')                  # gruppi
+await m.react('👍')                                 # '' rimuove la reazione</code></pre>
+<p><code>send()</code> e <code>reply()</code> restituiscono il <b>messaggio inviato</b>:</p>
+<pre><code>sent = await m.reply('lavoro...')
+await sent.edit('fatto')
+await sent.delete()</code></pre>
+<p>Altri membri: <code>m.forward(jid)</code>, <code>m.read()</code>, <code>m.typing(2)</code>, <code>await m.download()</code>, <code>await m.save('dir/')</code>, <code>m.quoted</code>, <code>m.mentions</code>, <code>m.media_type</code>, <code>await m.group()</code>, <code>await m.sender_phone()</code>.</p>
+<h3>Conversazioni</h3>
+<pre><code>name = await m.ask('Come ti chiami?', timeout=30)   # solleva asyncio.TimeoutError
+ok = await m.confirm('Sicuro?')                      # True / False / None
+color = await m.choose('Colore?', ['rosso', 'blu'])  # menu numerato</code></pre>
+<p><code>ask</code> attende il prossimo messaggio dello stesso mittente nella stessa chat e lo <b>consuma</b>. Per attese custom: <code>client.wait_for(chat=..., sender=..., filter=..., timeout=..., consume=False)</code>.</p>
+
+<h2 id="contenuti">Contenuti inviabili</h2>
+<p><code>await client.send(jid, content, **options)</code> · <code>await m.reply(content, **options)</code>. Una <code>str</code> diventa <code>{'text': ...}</code>.</p>
+<table>
+<tr><th>tipo</th><th>forma</th></tr>
+<tr><td><code>TextContent</code></td><td><code>{'text': str, 'linkPreview'?, 'backgroundColor'?, 'font'?}</code></td></tr>
+<tr><td><code>ImageContent</code></td><td><code>{'image': Source, 'caption'?, 'viewOnce'?}</code></td></tr>
+<tr><td><code>VideoContent</code></td><td><code>{'video': Source, 'caption'?, 'gifPlayback'?, 'ptv'?}</code> (ptv = video nota rotonda)</td></tr>
+<tr><td><code>AudioContent</code></td><td><code>{'audio': Source, 'ptt'?, 'mimetype'?, 'seconds'?}</code></td></tr>
+<tr><td><code>DocumentContent</code></td><td><code>{'document': Source, 'fileName', 'mimetype', 'caption'?}</code></td></tr>
+<tr><td><code>StickerContent</code></td><td><code>{'sticker': Source}</code> — image/webp</td></tr>
+<tr><td><code>LocationContent</code></td><td><code>{'location': {'degreesLatitude','degreesLongitude','name'?,'address'?}}</code></td></tr>
+<tr><td><code>ContactsContent</code></td><td><code>{'contacts': {'displayName', 'contacts': [{'vcard': str}]}}</code></td></tr>
+<tr><td><code>ReactContent</code></td><td><code>{'react': {'text': '👍', 'key': MessageKey}}</code></td></tr>
+<tr><td><code>DeleteContent</code></td><td><code>{'delete': MessageKey}</code></td></tr>
+<tr><td><code>ForwardContent</code></td><td><code>{'forward': WAMessage, 'force'?}</code></td></tr>
+<tr><td><code>PollContent</code></td><td><code>{'poll': {'name','values':[str],'selectableCount'?}}</code></td></tr>
+<tr><td><code>EventContent</code></td><td><code>{'event': {'name','startDate','endDate'?...}}</code> date <code>datetime</code></td></tr>
+<tr><td><code>PinContent</code></td><td><code>{'pin': MessageKey, 'type': 1|2, 'time'?}</code></td></tr>
+<tr><td><code>GroupInviteContent</code></td><td><code>{'groupInvite': {...}}</code></td></tr>
+<tr><td><code>DisappearingContent</code></td><td><code>{'disappearingMessagesInChat': True | secondi | False}</code></td></tr>
+</table>
+<p><code>Source</code> = <code>bytes</code> · <code>{'url': path/URL/data URI}</code> · <code>{'stream': async iterable di bytes}</code>.</p>
+<h3>SendOptions</h3>
+<p><code>quoted</code>, <code>messageId</code>, <code>timestamp</code>, <code>ephemeralExpiration</code>, <code>statusJidList</code>, <code>useCachedGroupMetadata</code>, <code>useUserDevicesCache</code>, <code>participant</code>, <code>additionalAttributes</code>, <code>additionalNodes</code>, <code>backgroundColor</code>, <code>font</code>, <code>mediaUploadTimeoutMs</code>.</p>
+
+<h2 id="eventi">Eventi</h2>
+<p>I decoratori tipizzati chiamano l'handler una volta per elemento con un <code>Event</code> (dict con accesso via attributo; <code>e.raw</code> payload originale, <code>e.client</code> il client, <code>await e.send(...)</code> scrive su <code>e.chat</code>).</p>
+<table>
+<tr><th>decoratore</th><th>campi</th></tr>
+<tr><td><code>on_ready</code>, <code>on_close(reason)</code>, <code>on_qr(qr)</code>, <code>on_error</code>, <code>on_denied</code></td><td>—</td></tr>
+<tr><td><code>on_connection</code></td><td><code>connection</code>, <code>qr</code>, <code>last_disconnect</code></td></tr>
+<tr><td><code>on_history</code></td><td><code>chats</code>, <code>contacts</code>, <code>messages</code>, <code>is_latest</code>, <code>sync_type</code></td></tr>
+<tr><td><code>on_message_update</code></td><td><code>id</code>, <code>chat</code>, <code>status</code>, <code>edited</code>, <code>message</code></td></tr>
+<tr><td><code>on_message_delete</code></td><td><code>id</code>, <code>chat</code>, <code>key</code> o <code>all=True</code></td></tr>
+<tr><td><code>on_reaction</code></td><td><code>emoji</code>, <code>removed</code>, <code>reactor</code>, <code>chat</code>, <code>message_id</code></td></tr>
+<tr><td><code>on_receipt</code></td><td><code>id</code>, <code>chat</code>, <code>user</code>, <code>status</code></td></tr>
+<tr><td><code>on_presence</code></td><td><code>chat</code>, <code>jid</code>, <code>presence</code>, <code>last_seen</code></td></tr>
+<tr><td><code>on_group_join/leave/promote/demote</code>, <code>on_participants</code></td><td><code>chat</code>, <code>participants</code>, <code>action</code>, <code>author</code></td></tr>
+<tr><td><code>on_group_upsert/update</code>, <code>on_join_request</code></td><td>campi gruppo</td></tr>
+<tr><td><code>on_chat_*</code>, <code>on_contact_*</code></td><td>campi chat / contatto</td></tr>
+<tr><td><code>on_call</code></td><td><code>id</code>, <code>from_</code>, <code>status</code>, <code>is_video</code></td></tr>
+<tr><td><code>on_blocklist</code>, <code>on_label</code>, <code>on_settings_update</code>, <code>on_lid_mapping</code>, <code>on_newsletter_*</code></td><td>—</td></tr>
+</table>
+<p>Gli eventi raw di Baileys funzionano ancora: <code>@client.on('messages.upsert')</code>, <code>@client.on('creds.update')</code>.</p>
+
+<h2 id="filtri">Filtri e middleware</h2>
+<pre><code>from baileys import filters
+
+@client.message(filters.group & filters.regex(r'\bhello\b') & ~filters.from_me)
+async def hello(m): ...
+
+@client.use
+async def log_and_ban(m, call_next):
+    if m.sender in BANNED:
+        return                       # stop: non gira nient'altro
+    m.state['t0'] = time.monotonic() # dati condivisi con gli handler
+    await call_next()</code></pre>
+<p>Filtri disponibili: <code>text</code>, <code>from_me</code>, <code>group</code>, <code>private</code>, <code>media</code>, <code>quoted</code>, <code>media_type('image','video')</code>, <code>regex(...)</code>, <code>equals(...)</code>, <code>chat(...)</code>, <code>sender(...)</code>. Combinabili con <code>&amp;</code>, <code>|</code>, <code>~</code>. Il middleware gira in ordine di registrazione; le eccezioni non fermano mai la connessione.</p>
+
+<h2 id="gruppi">Gruppi e contatti</h2>
+<pre><code>g = await m.group()          # oppure await client.group('123@g.us'); await client.groups()
+g.subject, g.size, g.description, g.owner
+g.admins, g.participants
+g.is_admin(m.sender), g.is_superadmin(jid), g.has(jid), g.bot_is_admin
+
+await g.add(jid1, jid2); await g.remove(jid); await g.promote(jid); await g.demote(jid)
+await g.rename('Nuovo nome'); await g.set_description('...'); await g.lock(only_admins_send=True)
+await g.invite_link(); await g.revoke_invite(); await g.leave()
+await g.send('hello'); await g.mention_all('hey')</code></pre>
+<p>Metadata in cache (<code>Client(group_cache_ttl=300)</code>), invalidata sugli eventi di gruppo.</p>
+<h3>LID ↔ numero</h3>
+<pre><code>await client.phone_of('555@lid')          # '39333...@s.whatsapp.net' o None
+await client.lid_of('39333...@s.whatsapp.net')
+await client.same_user(a, b)              # qualsiasi mix LID/telefono
+await m.sender_phone(); await m.sender_number()</code></pre>
+<h3>Contatti</h3>
+<p><code>client.contact(jid)</code> → <code>Contact</code> (<code>name</code>, <code>push_name</code>, <code>number</code>, <code>picture_url()</code>), <code>client.name_of(jid)</code>.</p>
+
+<h2 id="coda">Coda di invio</h2>
+<p>Ogni <code>client.send</code> / <code>m.reply</code> passa da una coda: ordine per chat, spaziatura con jitter, retry con backoff sui guasti transitori (connessione chiusa, timeout, 503).</p>
+<pre><code>Client('auth', rate_limit={'per_chat': 1.0, 'global_': 0.3, 'jitter': 0.4, 'retries': 3})
+Client('auth', rate_limit=False)            # disattiva
+await client.send_now(jid, 'urgente')       # salta la spaziatura
+await client.broadcast(jids, 'ciao a tutti')</code></pre>
+<div class="note warn">Riduce la probabilità di sembrare un flood, <b>non</b> rende sicuri i messaggi massivi o non richiesti.</div>
+
+<h2 id="storage">Storage</h2>
+<table>
+<tr><th>valore di <code>auth=</code></th><th>backend</th></tr>
+<tr><td><code>'folder'</code></td><td>JSON multi-file (default)</td></tr>
+<tr><td><code>'bot.db'</code> / <code>.sqlite</code></td><td>SQLite, un file, scritture atomiche</td></tr>
+<tr><td><code>(state, save_creds)</code></td><td>qualsiasi coppia restituita dagli helper</td></tr>
+<tr><td><code>async def factory()</code></td><td>creazione lazy</td></tr>
+</table>
+<pre><code>from baileys import use_sqlite_auth_state, use_redis_auth_state, use_custom_auth_state
+
+state, save = await use_sqlite_auth_state('bot.db')
+state, save = await use_redis_auth_state(redis.asyncio.Redis(), prefix='sales')</code></pre>
+<pre><code>class MyBackend:
+    async def get_many(self, keys): ...   # -> {key: json | None}
+    async def set_many(self, items): ...  # None elimina; atomiche se possibile
+
+state, save = await use_custom_auth_state(MyBackend())</code></pre>
+
+<h2 id="plugin">Plugin e account multipli</h2>
+<pre><code># plugins/admin.py
+from baileys import Plugin
+plugin = Plugin('admin')
+
+@plugin.command('kick', admin_only=True, bot_admin=True)
+async def kick(m, args): ...
+
+@plugin.on_group_join
+async def welcome(e): await e.send('bentornato')</code></pre>
+<pre><code>def setup(client):
+    @client.command('dice')
+    async def dice(m): ...
+
+client.load('plugins')     # cartella, file o 'package.module'
+client.reload('admin')     # hot swap
+client.unload('admin')
+client.plugins             # ['admin', ...]</code></pre>
+<pre><code>pool = ClientPool({'sales': 'auth_sales', 'support': 'auth_support.db'}, prefix='!', owners=['39...'])
+
+@pool.command('ping')
+async def ping(m): await m.reply(f'pong da {m.client.name}')
+
+pool.load('plugins')
+pool.run()</code></pre>
+
+<h2 id="tipi">Tipi base</h2>
+<h3>JID</h3>
+<p><code>str</code>: <code>'&lt;n&gt;@s.whatsapp.net'</code> (telefono), <code>'&lt;id&gt;@lid'</code> (privacy ID), <code>'&lt;id&gt;@g.us'</code> (gruppo), <code>'&lt;id&gt;@newsletter'</code> (canale), <code>status@broadcast</code>. Helper: <code>jid_decode</code>, <code>jid_encode</code>, <code>jid_normalized_user</code>, <code>are_jids_same_user</code>, <code>is_pn_user</code>, <code>is_lid_user</code>, <code>is_jid_group</code>, <code>is_jid_newsletter</code>, <code>S_WHATSAPP_NET</code>.</p>
+<h3>MessageKey / WAMessage</h3>
+<pre><code>class MessageKey(TypedDict, total=False):
+    remoteJid: JID; id: str; fromMe: bool
+    participant: JID; participantAlt: JID; remoteJidAlt: JID
+
+class WAMessage(TypedDict, total=False):
+    key: MessageKey; message: dict; messageTimestamp: int; pushName: str
+    status: int          # 0 error, 1 pending, 2 sent, 3 delivered, 4 read, 5 played
+    broadcast: bool; participant: JID</code></pre>
+<h3>Enum principali</h3>
+<table>
+<tr><th>enum</th><th>valori</th></tr>
+<tr><td><code>DisconnectReason</code></td><td><code>connectionClosed=428</code>, <code>connectionLost=408</code>, <code>connectionReplaced=440</code>, <code>loggedOut=401</code>, <code>badSession=500</code>, <code>restartRequired=515</code>, <code>forbidden=403</code>, <code>unavailableService=503</code></td></tr>
+<tr><td><code>WAMessageAddressingMode</code></td><td><code>PN='pn'</code>, <code>LID='lid'</code></td></tr>
+<tr><td><code>SyncState</code></td><td><code>Connecting=0</code>, <code>AwaitingInitialSync=1</code>, <code>Syncing=2</code>, <code>Online=3</code></td></tr>
+<tr><td><code>WAMessageStatus</code></td><td><code>ERROR</code>, <code>PENDING</code>, <code>SERVER_ACK</code>, <code>DELIVERY_ACK</code>, <code>READ</code>, <code>PLAYED</code></td></tr>
+<tr><td><code>LabelColor</code> / <code>LabelAssociationType</code></td><td><code>Color1..Color20</code> · <code>Chat='label_jid'</code>, <code>Message='label_message'</code></td></tr>
+</table>
+<h3>Errori</h3>
+<p><code>Boom</code>: <code>.message</code>, <code>.status_code</code>, <code>.data</code>, <code>.output['statusCode']</code>. Retry automatici su <code>ConnectionError</code>, <code>TimeoutError</code> e status <code>408, 428, 440, 503, 515</code>.</p>
+<pre><code>@client.on_close
+async def closed(reason):
+    if reason == DisconnectReason.loggedOut: ...</code></pre>
+<h3>Convenzioni JS → Python</h3>
+<table>
+<tr><th>JavaScript</th><th>Python</th></tr>
+<tr><td><code>makeWASocket(config)</code></td><td><code>make_wa_socket(config)</code> (alias <code>makeWASocket</code>)</td></tr>
+<tr><td><code>sock.sendMessage(...)</code></td><td><code>sock.send_message(...)</code> (camelCase funziona)</td></tr>
+<tr><td><code>Buffer</code></td><td><code>bytes</code></td></tr>
+<tr><td><code>{ a: 1 }</code></td><td><code>dict</code> con le stesse chiavi camelCase</td></tr>
+<tr><td><code>Promise</code></td><td><code>async def</code> / <code>await</code></td></tr>
+</table>
+
+<h2 id="socket">Socket low-level</h2>
+<pre><code>from baileys import make_wa_socket, use_multi_file_auth_state
+
+state, save_creds = await use_multi_file_auth_state('auth')
+sock = make_wa_socket({'auth': state})
+sock.ev.on('creds.update', lambda _: asyncio.ensure_future(save_creds()))</code></pre>
+<p>Tutta l'API originale è sotto <code>client.sock</code>: <code>relay_message</code>, <code>group_metadata</code>, app-state, newsletter.</p>
+<pre><code>await client.relay(jid, {'conversation': 'hi'})
+await client.group_metadata(jid)</code></pre>
+
+<h2 id="faq">FAQ</h2>
+<h3>ModuleNotFoundError: No module named 'baileys'</h3>
+<p>Installa nella stessa virtualenv con cui avvii il bot.</p>
+<h3>Il QR non appare</h3>
+<p>Il terminale è troppo stretto per disegnarlo, oppure usa <code>pairing_phone=</code>.</p>
+<h3>I miei messaggi non attivano i comandi</h3>
+<p>È voluto (<code>ignore_from_me=True</code>). Imposta <code>ignore_from_me=False</code> per testare con te stesso.</p>
+<h3>Lo sticker non si carica</h3>
+<p>Deve essere WebP: <code>reply_sticker</code> converte immagini, GIF e video (video richiede <code>ffmpeg</code>).</p>
+<h3>Come faccio logout?</h3>
+<p><code>await client.logout()</code> oppure cancella la cartella/database di auth.</p>
+
+<footer>
+Documentazione generata da README.md, DOCS.md e docs/ della repo ChillatoOfficial/baileys · non affiliata a WhatsApp o Meta.
+</footer>
+</main>
+</div>
+
+<script>
+const q = document.getElementById('q');
+const blocks = [...document.querySelectorAll('main > *')];
+q.addEventListener('input', () => {
+  const t = q.value.trim().toLowerCase();
+  blocks.forEach(el => {
+    if (el.tagName === 'H1' || el.classList.contains('sub')) return;
+    el.style.display = !t || el.textContent.toLowerCase().includes(t) ? '' : 'none';
+  });
+});
+const links = [...document.querySelectorAll('nav a')];
+const obs = new IntersectionObserver(es => {
+  es.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.toggle('on', l.hash === '#' + e.target.id));
+    }
+  });
+}, {rootMargin: '-60px 0px -75% 0px'});
+document.querySelectorAll('main h2[id]').forEach(h => obs.observe(h));
+</script>
+</body>
+</html>
